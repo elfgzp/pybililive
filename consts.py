@@ -1,6 +1,7 @@
 WS_HOST = 'broadcastlv.chat.bilibili.com'
 WS_PORT = 2244
 WS_URI = 'sub'
+WS_HEADER_STRUCT = '!IHHII'
 WS_OP_HEARTBEAT = 2
 WS_OP_HEARTBEAT_REPLY = 3
 WS_OP_MESSAGE = 5
@@ -22,39 +23,18 @@ WS_HEADER_DEFAULT_VERSION = 1
 WS_HEADER_DEFAULT_OPERATION = 1
 WS_HEADER_DEFAULT_SEQUENCE = 1
 
+API_LIVE_BASE_URL = 'api.live.bilibili.com'
+GET_REAL_ROOM_URI = 'room/v1/Room/room_init'
+REQUEST_TIME_OUT = 15
+
 VERSION = 1
 MAGIC = 16
 MAGIC_PARAM = 1
 HEADER_LENGTH = 16
+
+# actions
 HEART_BEAT = 2
 JOIN_CHANNEL = 7
 
 HEARTBEAT_DELAY = 10
 CHECK_ERROR_DELAY = 15
-
-
-DATA_STRUCTURE = [{
-    'name': 'Header Length',
-    'key': 'headerLen',
-    'bytes': 2,
-    'offset': WS_HEADER_OFFSET,
-    'value': WS_PACKAGE_HEADER_TOTAL_LENGTH
-}, {
-    'name': 'Protocol Version',
-    'key': 'ver',
-    'bytes': 2,
-    'offset': WS_VERSION_OFFSET,
-    'value': WS_HEADER_DEFAULT_VERSION
-}, {
-    'name': 'Operation',
-    'key': 'op',
-    'bytes': 4,
-    'offset': WS_OPERATION_OFFSET,
-    'value': WS_HEADER_DEFAULT_OPERATION
-}, {
-    'name': 'Sequence Id',
-    'key': 'seq',
-    'bytes': 4,
-    'offset': WS_SEQUENCE_OFFSET,
-    'value': WS_HEADER_DEFAULT_SEQUENCE
-}]
