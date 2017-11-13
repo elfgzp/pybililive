@@ -1,4 +1,5 @@
 import collections
+import datetime
 
 Danmu = collections.namedtuple(
     'Danmu',
@@ -8,7 +9,11 @@ Danmu = collections.namedtuple(
 
 async def danmmu_msg(live, message):
     danmu = Danmu(*message['info'])
-    print('{} 说: {}'.format(danmu.user_info[1], danmu.content))
+    print('{} {} 说: {}'.format(
+        datetime.datetime.fromtimestamp(danmu.danmu_header[4]),
+        danmu.user_info[1],
+        danmu.content)
+    )
 
 
 async def send_gift(live, message):
