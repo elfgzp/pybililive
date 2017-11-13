@@ -21,28 +21,33 @@ ws_struct = struct.Struct(WS_HEADER_STRUCT)
 
 
 class BiliLive(object):
-    def __init__(self, room_id, user_cookie=None, loop=None,
-                 connector=None):
-        if not loop:
-            loop = asyncio.get_event_loop()
+    __slots__ = ['room_id', 'user_cookie', '_user_id', '_user_login_status',
+                 '_session', '_ws', '_heart_beat_task', '_cmd_func']
 
-        if not connector:
-            connector = aiohttp.TCPConnector(loop=loop)
+    def __init__(self, room_id, user_cookie=None, cmd_func_dict=None, loop=None,
+                 connector=None):
+        cmd_func_dict = cmd_func_dict if cmd_func_dict else {}
+        loop = loop if loop else asyncio.get_event_loop()
+        connector = connector if connector else aiohttp.TCPConnector(loop=loop)
 
         self.room_id = room_id
         self.user_cookie = user_cookie
-        self.user_id = None
-        self.user_login_status = False
-        self.session = aiohttp.ClientSession(loop=loop, connector=connector,
-                                             cookies=user_cookie)
+        self._user_id = None
+        self._user_login_status = False
+        self._session = aiohttp.ClientSession(loop=loop, connector=connector,
+                                              cookies=user_cookie)
         self._ws = None
         self._heart_beat_task = None
-        self._check_error = None
+        # message cmd function
+        self._cmd_func = cmd_func_dict
+        # cmd example
+        # DANMU_MSG, SEND_GIFT, LIVE, PREPARING, WELCOME, WELCOME_GUARD, GUARD_BUY, ROOM_BLOCK_MSG
+        # SYS_GIFT, SPECIAL_GIFT
 
     async def get_real_room_id(self, room_id):
         real_room_id = room_id
         try:
-            res = await self.session.get(
+            res = await self._session.get(
                 r'http://{host}:{port}/{uri}'.format(
                     host=API_LIVE_BASE_URL,
                     port=80,
@@ -58,8 +63,8 @@ class BiliLive(object):
     async def connect(self):
         try:
             self.room_id = await self.get_real_room_id(self.room_id)
-            await self.check_user_login_status()
-            async with self.session.ws_connect(
+            await self.check__user_login_status()
+            async with self._session.ws_connect(
                     r'ws://{host}:{port}/{uri}'.format(
                         host=WS_HOST,
                         port=WS_PORT,
@@ -78,14 +83,17 @@ class BiliLive(object):
         except Exception as e:
             logger.exception(e)
 
-    async def check_user_login_status(self):
+    async def reconnect(self):
+        pass
+
+    async def check__user_login_status(self):
         if not self.user_cookie:
-            self.user_id = random_user_id()
+            self._user_id = random_user_id()
             return
 
     async def send_join_room(self):
         await self.send_socket_data(action=JOIN_CHANNEL,
-                                    payload=json.dumps({'uid': self.user_id, 'roomid': self.room_id}).replace(' ', ''))
+                                    payload=json.dumps({'uid': self._user_id, 'roomid': self.room_id}))
 
     async def send_socket_data(self, action, payload='',
                                magic=MAGIC, ver=VERSION, param=MAGIC_PARAM):
@@ -125,9 +133,9 @@ class BiliLive(object):
     async def on_binary(self, binary):
         try:
             while binary:
-                packet_length, header_length, a, operation, b = (ws_struct.unpack_from(binary))
+                packet_length, header_length, _, operation, _ = (ws_struct.unpack_from(binary))
                 if operation == WS_OP_MESSAGE:
-                    self.on_message(binary[header_length:packet_length].decode('utf-8', 'ignore'))
+                    await self.on_message(binary[header_length:packet_length].decode('utf-8', 'ignore'))
                 elif operation == WS_OP_CONNECT_SUCCESS:
                     pass
                 elif operation == WS_OP_HEARTBEAT_REPLY:
@@ -137,8 +145,13 @@ class BiliLive(object):
             logger.warning("cannot decode message: %s" % e)
             return
 
-    def on_message(self, message):
-        try:
-            print(json.loads(message))
-        except Exception as e:
-            pass
+    def set_cmd_func(self, cmd, func):
+        if not isinstance(func, function):
+            raise TypeError('func must be a function')
+        self._cmd_func[cmd] = func
+
+    async def on_message(self, message):
+        message = (json.loads(message))
+        cmd_func = self._cmd_func.get(message['cmd'])
+        if cmd_func:
+            await cmd_func(message)
