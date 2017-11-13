@@ -31,7 +31,7 @@ def build_cookie_with_str(cookie_str):
 
 class BiliLive(object):
     __slots__ = ['room_id', 'user_cookie', '_user_id', '_user_login_status',
-                 '_session', '_ws', '_heart_beat_task', '_cmd_func']
+                 'session', '_ws', '_heart_beat_task', '_cmd_func']
 
     def __init__(self, room_id, user_cookie=None, cmd_func_dict=None, loop=None,
                  connector=None):
@@ -46,8 +46,8 @@ class BiliLive(object):
         self.user_cookie = user_cookie
         self._user_id = None
         self._user_login_status = False
-        self._session = aiohttp.ClientSession(loop=loop, connector=connector,
-                                              cookies=user_cookie)
+        self.session = aiohttp.ClientSession(loop=loop, connector=connector,
+                                             cookies=user_cookie)
         self._ws = None
         self._heart_beat_task = None
         # message cmd function
@@ -59,7 +59,7 @@ class BiliLive(object):
     async def get_real_room_id(self, room_id):
         real_room_id = room_id
         try:
-            res = await self._session.get(
+            res = await self.session.get(
                 r'http://{host}:{port}/{uri}'.format(
                     host=API_LIVE_BASE_URL,
                     port=80,
@@ -76,7 +76,7 @@ class BiliLive(object):
         try:
             self.room_id = await self.get_real_room_id(self.room_id)
             await self.check_user_login_status()
-            async with self._session.ws_connect(
+            async with self.session.ws_connect(
                     r'ws://{host}:{port}/{uri}'.format(
                         host=WS_HOST,
                         port=WS_PORT,
@@ -105,7 +105,7 @@ class BiliLive(object):
             return
 
         try:
-            res = await self._session.get(
+            res = await self.session.get(
                 r'http://{host}:{port}/{uri}'.format(
                     host=API_LIVE_BASE_URL,
                     port=80,
@@ -122,7 +122,7 @@ class BiliLive(object):
     async def get_user_info(self):
         user_info = {}
         try:
-            res = await self._session.get(
+            res = await self.session.get(
                 r'http://{host}:{port}/{uri}'.format(
                     host=API_LIVE_BASE_URL,
                     port=80,
@@ -137,7 +137,7 @@ class BiliLive(object):
 
     async def send_danmu(self, danmu, color=16777215, font_size=25, mode=1):
         try:
-            res = await self._session.post(
+            res = await self.session.post(
                 r'http://{host}:{port}/{uri}'.format(
                     host=LIVE_BASE_URL,
                     port=80,
