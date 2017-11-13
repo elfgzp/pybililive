@@ -25,6 +25,12 @@ WS_HEADER_DEFAULT_SEQUENCE = 1
 
 API_LIVE_BASE_URL = 'api.live.bilibili.com'
 GET_REAL_ROOM_URI = 'room/v1/Room/room_init'
+CHECK_USER_LOGIN_URI = 'User/getUserInfo'
+GET_USER_INFO_URI = 'i/api/liveinfo'
+
+LIVE_BASE_URL = 'live.bilibili.com'
+SEND_DANMU_URI = 'msg/send'
+
 REQUEST_TIME_OUT = 15
 
 VERSION = 1

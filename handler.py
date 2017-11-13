@@ -6,12 +6,12 @@ Danmu = collections.namedtuple(
 )
 
 
-async def danmmu_msg(message):
+async def danmmu_msg(live, message):
     danmu = Danmu(*message['info'])
     print('{} 说: {}'.format(danmu.user_info[1], danmu.content))
 
 
-async def send_gift(message):
+async def send_gift(live, message):
     user_name = message['data']['uname']
     gift_name = message['data']['giftName']
     num = message['data']['num']

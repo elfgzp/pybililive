@@ -197,3 +197,6 @@ target/
 
 # PyCharm
 .idea/
+
+# My ignore
+*with_cookie.py
