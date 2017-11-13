@@ -161,7 +161,7 @@ class BiliLive(object):
 
     async def send_join_room(self):
         await self.send_socket_data(action=JOIN_CHANNEL,
-                                    payload=json.dumps({'uid': self._user_id, 'roomid': self.room_id}))
+                                    payload=json.dumps({'uid': random_user_id(), 'roomid': self.room_id}))
 
     async def send_socket_data(self, action, payload='',
                                magic=MAGIC, ver=VERSION, param=MAGIC_PARAM):
