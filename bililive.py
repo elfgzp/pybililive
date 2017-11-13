@@ -135,7 +135,7 @@ class BiliLive(object):
         finally:
             return user_info
 
-    async def send_danmu(self, danmu, color=16777215, font_size=25, mode=1):
+    async def send_danmu(self, danmu, room_id=None, color=16777215, font_size=25, mode=1):
         try:
             res = await self.session.post(
                 r'http://{host}:{port}/{uri}'.format(
@@ -146,7 +146,7 @@ class BiliLive(object):
                     'msg': danmu,
                     'color': color,
                     'fontsize': font_size,
-                    'roomid': self.room_id,
+                    'roomid': room_id if room_id else self.room_id,
                     'rnd': int(time.time()),
                     'mode': mode
                 })
