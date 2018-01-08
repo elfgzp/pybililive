@@ -5,7 +5,7 @@ import struct
 import json
 import time
 from http import cookies
-from consts import (
+from pybililive.consts import (
     WS_HOST, WS_PORT, WS_URI,
     WS_HEADER_STRUCT,
     HEADER_LENGTH, MAGIC, VERSION, MAGIC_PARAM,
@@ -15,7 +15,7 @@ from consts import (
     API_LIVE_BASE_URL, GET_REAL_ROOM_URI, CHECK_USER_LOGIN_URI, GET_USER_INFO_URI,
     LIVE_BASE_URL, SEND_DANMU_URI
 )
-from utils import (
+from pybililive.utils import (
     random_user_id
 )
 
@@ -222,4 +222,7 @@ class BiliLive(object):
         message = (json.loads(message))
         cmd_func = self._cmd_func.get(message['cmd'])
         if cmd_func:
-            await cmd_func(self, message)
+            try:
+                await cmd_func(self, message)
+            except Exception as e:
+                logger.exception('cannot process with func %s, error: %s ' % (cmd_func.__name__, e))
