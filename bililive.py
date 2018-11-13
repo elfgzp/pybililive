@@ -30,18 +30,21 @@ def build_cookie_with_str(cookie_str):
 
 
 class BiliLive(object):
-    __slots__ = ['room_id', 'user_cookie', '_user_id', '_user_login_status',
-                 'session', '_ws', '_heart_beat_task', '_cmd_func']
+    __slots__ = ['raw_room_id', 'room_id', 'user_cookie', '_user_id', '_user_login_status', 'loop',
+                 'session', '_ws', '_heart_beat_task', '_cmd_func', '_stop', 'ext_settings']
 
     def __init__(self, room_id, user_cookie=None, cmd_func_dict=None, loop=None,
-                 connector=None):
+                 connector=None, stop=None):
         cmd_func_dict = cmd_func_dict if cmd_func_dict else {}
-        loop = loop if loop else asyncio.get_event_loop()
+        self.loop = loop if loop else asyncio.get_event_loop()
         connector = connector if connector else aiohttp.TCPConnector(loop=loop)
 
+        self.raw_room_id = room_id
         self.room_id = room_id
         if isinstance(user_cookie, str):
             user_cookie = build_cookie_with_str(user_cookie)
+
+        self._stop = stop if stop else lambda kwargs: False
 
         self.user_cookie = user_cookie
         self._user_id = None
@@ -52,6 +55,7 @@ class BiliLive(object):
         self._heart_beat_task = None
         # message cmd function
         self._cmd_func = cmd_func_dict
+        self.ext_settings = {}
         # cmd example
         # DANMU_MSG, SEND_GIFT, LIVE, PREPARING, WELCOME, WELCOME_GUARD, GUARD_BUY, ROOM_BLOCK_MSG
         # SYS_GIFT, SPECIAL_GIFT
@@ -176,11 +180,20 @@ class BiliLive(object):
     async def heart_beat(self):
         while True:
             try:
+                if self.stop():
+                    self.loop.stop()
                 logger.debug("Sending heart beat.")
                 await self.send_socket_data(action=HEART_BEAT)
                 await asyncio.sleep(HEARTBEAT_DELAY)
             except Exception as e:
                 logger.exception(e)
+
+    def stop(self, *args, **kwargs):
+        """
+        Add your stop condition
+        :return:
+        """
+        return self._stop(self)
 
     def on_error(self):
         """
