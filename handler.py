@@ -1,15 +1,9 @@
-import collections
 import datetime
 
-Danmu = collections.namedtuple(
-    'Danmu',
-    ['danmu_header', 'content', 'user_info', 'user_badge', 'user_level', 'user_title', 'user_is_vip', 'user_is_svip',
-     'name_color']
-)
-
+from definitions import Danmaku
 
 async def danmmu_msg(live, message):
-    danmu = Danmu(*message['info'])
+    danmu = Danmaku(*message['info'])
     print('{} {} 说: {}'.format(
         datetime.datetime.fromtimestamp(danmu.danmu_header[4]),
         danmu.user_info[1],
