@@ -4,7 +4,6 @@ import aiohttp
 import struct
 import json
 import time
-from http import cookies
 from pybililive.consts import (
     WS_HOST, WS_PORT, WS_URI,
     WS_HEADER_STRUCT,
@@ -16,21 +15,15 @@ from pybililive.consts import (
     LIVE_BASE_URL, SEND_DANMU_URI
 )
 from pybililive.utils import (
-    random_user_id
+    random_user_id, build_cookie_with_str
 )
 
 logger = logging.getLogger('bili')
 ws_struct = struct.Struct(WS_HEADER_STRUCT)
 
 
-def build_cookie_with_str(cookie_str):
-    simple_cookie = cookies.SimpleCookie(cookie_str)  # Parse Cookie from str
-    cookie = {key: morsel.value for key, morsel in simple_cookie.items()}
-    return cookie
-
-
 class BiliLive(object):
-    __slots__ = ['raw_room_id', 'room_id', 'user_cookie', '_user_id', '_user_login_status', 'loop',
+    __slots__ = ['raw_room_id', 'room_id', 'raw_cookie', 'user_cookie', '_user_id', '_user_login_status', 'loop',
                  'session', '_ws', '_heart_beat_task', '_cmd_func', '_stop', 'ext_settings']
 
     def __init__(self, room_id, user_cookie=None, cmd_func_dict=None, loop=None,
@@ -41,6 +34,8 @@ class BiliLive(object):
 
         self.raw_room_id = room_id
         self.room_id = room_id
+
+        self.raw_cookie = user_cookie
         if isinstance(user_cookie, str):
             user_cookie = build_cookie_with_str(user_cookie)
 
@@ -90,6 +85,8 @@ class BiliLive(object):
                 await self.send_join_room()
                 self._heart_beat_task = asyncio.ensure_future(self.heart_beat())
                 async for msg in ws:
+                    if not self._ws:
+                        break
                     if msg.type == aiohttp.WSMsgType.BINARY:
                         await self.on_binary(msg.data)
                     elif msg.type == aiohttp.WSMsgType.CLOSED:
@@ -181,7 +178,11 @@ class BiliLive(object):
         while True:
             try:
                 if self.stop():
+                    logger.info('Stop client.')
+                    self._ws.close()
+                    self._ws = None
                     self.loop.stop()
+                    break
                 logger.debug("Sending heart beat.")
                 await self.send_socket_data(action=HEART_BEAT)
                 await asyncio.sleep(HEARTBEAT_DELAY)
