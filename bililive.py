@@ -145,6 +145,7 @@ class BiliLive(object):
                     danmu_split = danmu[:30]
                     danmu = danmu[30:]
                     await self._send_danmu(danmu_split, color, font_size, room_id if room_id else self.room_id, mode)
+                    await asyncio.sleep(2)
                 else:
                     await self._send_danmu(danmu, color, font_size, room_id if room_id else self.room_id, mode)
         except Exception as e:
