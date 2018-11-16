@@ -136,29 +136,40 @@ class BiliLive(object):
         finally:
             return user_info
 
-    async def send_danmu(self, danmu, room_id=None, color=16777215, font_size=25, mode=1):
+    async def send_danmu(self, danmu, max_length=30, room_id=None, color=16777215, font_size=25, mode=1):
         try:
-            res = await self.session.post(
-                r'http://{host}:{port}/{uri}'.format(
-                    host=LIVE_BASE_URL,
-                    port=80,
-                    uri=SEND_DANMU_URI
-                ), data={
-                    'msg': danmu,
-                    'color': color,
-                    'fontsize': font_size,
-                    'roomid': room_id if room_id else self.room_id,
-                    'rnd': int(time.time()),
-                    'mode': mode
-                })
-            data = await res.json()
-            if data['code'] != 0:
-                raise ConnectionError(data['msg'])
+            if len(danmu) <= max_length:
+                await self._send_danmu(danmu, color, font_size, room_id if room_id else self.room_id, mode)
+            else:
+                while len(danmu) > max_length:
+                    danmu_split = danmu[:30]
+                    danmu = danmu[30:]
+                    await self._send_danmu(danmu_split, color, font_size, room_id if room_id else self.room_id, mode)
+                else:
+                    await self._send_danmu(danmu, color, font_size, room_id if room_id else self.room_id, mode)
         except Exception as e:
             logger.exception(e)
             logger.error('弹幕 {} 发送失败'.format(danmu))
         else:
             logger.info('弹幕 {} 发送成功'.format(danmu))
+
+    async def _send_danmu(self, danmu, color, font_size, room_id, mode):
+        res = await self.session.post(
+            r'http://{host}:{port}/{uri}'.format(
+                host=LIVE_BASE_URL,
+                port=80,
+                uri=SEND_DANMU_URI
+            ), data={
+                'msg': danmu,
+                'color': color,
+                'fontsize': font_size,
+                'roomid': room_id,
+                'rnd': int(time.time()),
+                'mode': mode
+            })
+        data = await res.json()
+        if data['code'] != 0:
+            raise ConnectionError(data['msg'])
 
     async def send_join_room(self):
         await self.send_socket_data(action=JOIN_CHANNEL,
