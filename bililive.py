@@ -23,7 +23,8 @@ ws_struct = struct.Struct(WS_HEADER_STRUCT)
 
 
 class BiliLive(object):
-    __slots__ = ['raw_room_id', 'room_id', 'raw_cookie', 'user_cookie', '_user_id', '_user_login_status', 'loop',
+    __slots__ = ['raw_room_id', 'room_id', 'raw_cookie', 'user_cookie', '_user_id', '_user_name',
+                 '_user_login_status', 'loop',
                  'session', '_ws', '_heart_beat_task', '_cmd_func', '_stop', 'ext_settings']
 
     def __init__(self, room_id, user_cookie=None, cmd_func_dict=None, loop=None,
@@ -43,6 +44,7 @@ class BiliLive(object):
 
         self.user_cookie = user_cookie
         self._user_id = None
+        self._user_name = None
         self._user_login_status = False
         self.session = aiohttp.ClientSession(loop=loop, connector=connector,
                                              cookies=user_cookie)
@@ -113,10 +115,11 @@ class BiliLive(object):
                     uri=CHECK_USER_LOGIN_URI
                 ))
             data = await res.json()
-            if data['msg'] == 'ok':
+            if data['msg'] == 'success':
                 logger.info('{user_name} 登录成功'.format(user_name=data['data']['uname']))
                 user_info = await self.get_user_info()
                 self._user_id = user_info['userInfo']['uid']
+                self._user_name = user_info['userInfo']['uname']
         except Exception as e:
             logger.exception(e)
 
