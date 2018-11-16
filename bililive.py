@@ -152,7 +152,7 @@ class BiliLive(object):
                     'mode': mode
                 })
             data = await res.json()
-            if data['msg']:
+            if data['code'] != 0:
                 raise ConnectionError(data['msg'])
         except Exception as e:
             logger.exception(e)
