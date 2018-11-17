@@ -173,7 +173,7 @@ class BiliLive(object):
             })
         data = await res.json()
         if data['code'] != 0:
-            raise ConnectionError(data['msg'])
+            raise print('弹幕{}发送失败'.format(danmu))
 
     async def send_join_room(self):
         await self.send_socket_data(action=JOIN_CHANNEL,
