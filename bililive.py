@@ -4,6 +4,7 @@ import aiohttp
 import struct
 import json
 import time
+import re
 from pybililive.consts import (
     WS_HOST, WS_PORT, WS_URI,
     WS_HEADER_STRUCT,
@@ -24,7 +25,7 @@ ws_struct = struct.Struct(WS_HEADER_STRUCT)
 
 class BiliLive(object):
     __slots__ = ['raw_room_id', 'room_id', 'raw_cookie', 'user_cookie', '_user_id', '_user_name',
-                 '_user_login_status', 'loop',
+                 '_user_login_status', 'loop', 'csrf_token',
                  'session', '_ws', '_heart_beat_task', '_cmd_func', '_stop', 'ext_settings']
 
     def __init__(self, room_id, user_cookie=None, cmd_func_dict=None, loop=None,
@@ -37,8 +38,10 @@ class BiliLive(object):
         self.room_id = room_id
 
         self.raw_cookie = user_cookie
+        self.csrf_token = ''
         if isinstance(user_cookie, str):
             user_cookie = build_cookie_with_str(user_cookie)
+            self.csrf_token = user_cookie.get('bili_jct')
 
         self._stop = stop if stop else lambda kwargs: False
 
@@ -169,7 +172,10 @@ class BiliLive(object):
                 'fontsize': font_size,
                 'roomid': room_id,
                 'rnd': int(time.time()),
-                'mode': mode
+                'mode': mode,
+                'bubble': 0,
+                'csrf_token': self.csrf_token,
+                'csrf': self.csrf_token
             })
         data = await res.json()
         if data['code'] != 0:
