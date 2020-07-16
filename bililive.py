@@ -121,20 +121,20 @@ class BiliLive(object):
             if data['msg'] == 'success':
                 logger.info('{user_name} 登录成功'.format(user_name=data['data']['uname']))
                 user_info = await self.get_user_info()
-                self._user_id = user_info['userInfo']['uid']
-                self._user_name = user_info['userInfo']['uname']
+                self._user_id = user_info['mid']
+                self._user_name = user_info['uname']
         except Exception as e:
             logger.exception(e)
 
     async def get_user_info(self):
         user_info = {}
         try:
-            res = await self.session.get(
-                r'http://{host}:{port}/{uri}'.format(
-                    host=API_LIVE_BASE_URL,
-                    port=80,
+            url = r'http://{host}/{uri}'.format(
+                    host='api.bilibili.com',
                     uri=GET_USER_INFO_URI
-                ))
+                )
+            logger.info(r'get_user_info {url}'.format(url=url))
+            res = await self.session.get(url)
             data = await res.json()
             user_info = data['data']
         except Exception as e:
@@ -183,7 +183,7 @@ class BiliLive(object):
 
     async def send_join_room(self):
         await self.send_socket_data(action=JOIN_CHANNEL,
-                                    payload=json.dumps({'uid': random_user_id(), 'roomid': self.room_id}))
+                                    payload=json.dumps({'mid': random_user_id(), 'roomid': self.room_id}))
 
     async def send_socket_data(self, action, payload='',
                                magic=MAGIC, ver=VERSION, param=MAGIC_PARAM):
